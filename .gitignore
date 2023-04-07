@@ -1,0 +1,5 @@
+.idea
+.terraform
+src
+!src/vault.py
+!src/requirements.txt
