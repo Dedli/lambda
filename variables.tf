@@ -8,3 +8,8 @@ variable "vault_root_token" {
   type = string
   sensitive   = true
 }
+
+variable "secret_to_read" {
+  description = "existing secret to read from vault"
+  type = string
+}

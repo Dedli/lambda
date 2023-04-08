@@ -11,10 +11,12 @@ terraform {
   }
 }
 
+// aws provider will setup all lambda things and iam user/permissions
 provider "aws" {
   # Configuration options
 }
 
+// vault provider will setup all needed configuration on vault side
 provider "vault" {
   address = var.vault_addr
   token = var.vault_root_token
