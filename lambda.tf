@@ -47,7 +47,7 @@ resource "aws_cloudwatch_log_group" "example" {
 
 # See also the following AWS managed policy: AWSLambdaBasicExecutionRole
 # give the Lambda the rights to write logs
-data "aws_iam_policy_document" "lambda_logging" {
+data "aws_iam_policy_document" "lambda_policy" {
   statement {
     effect = "Allow"
 
@@ -55,9 +55,14 @@ data "aws_iam_policy_document" "lambda_logging" {
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
+      "ec2:DescribeNetworkInterfaces",
+      "ec2:CreateNetworkInterface",
+      "ec2:DeleteNetworkInterface",
+      "ec2:DescribeInstances",
+      "ec2:AttachNetworkInterface"
     ]
 
-    resources = ["arn:aws:logs:*:*:*"]
+    resources = ["*"]
   }
 }
 
@@ -65,7 +70,7 @@ resource "aws_iam_policy" "lambda_logging" {
   name        = "lambda_logging"
   path        = "/"
   description = "IAM policy for logging from a lambda"
-  policy      = data.aws_iam_policy_document.lambda_logging.json
+  policy      = data.aws_iam_policy_document.lambda_policy.json
 }
 
 // attache log permissions to previously created iam role
@@ -76,13 +81,17 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 
 // create the lambda function using the zip file created before
 resource "aws_lambda_function" "demo_lambda" {
-  depends_on = [vault_aws_auth_backend_role.lambda_role, aws_iam_role.iam_for_lambda]
+  depends_on = [aws_iam_role.iam_for_lambda, data.aws_iam_policy_document.lambda_policy]
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   role             = aws_iam_role.iam_for_lambda.arn
   function_name    = "vault_lambda"
   handler          = "vault.lambda_handler"
   runtime          = "python3.9"
+  vpc_config {
+    security_group_ids                 = var.vpc_security_group_ids
+    subnet_ids                         = var.vpc_subnet_ids
+  }
   environment {
     variables = {
       VAULT_ADDR = var.vault_addr
@@ -90,3 +99,4 @@ resource "aws_lambda_function" "demo_lambda" {
     }
   }
 }
+
