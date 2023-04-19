@@ -76,7 +76,7 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 
 // create the lambda function using the zip file created before
 resource "aws_lambda_function" "demo_lambda" {
-  depends_on = [vault_auth_backend.aws, aws_iam_role.iam_for_lambda]
+  depends_on = [vault_aws_auth_backend_role.lambda_role, aws_iam_role.iam_for_lambda]
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   role             = aws_iam_role.iam_for_lambda.arn

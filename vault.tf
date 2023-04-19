@@ -36,14 +36,9 @@ resource "aws_iam_access_key" "vault_access_key" {
   user    = aws_iam_user.vault_user.name
 }
 
-// enable aws authentication in vault
-resource "vault_auth_backend" "aws" {
-  type = "aws"
-}
 
 // vault also needs access to your aws account to check given iam role arns inside aws authentication method
 resource "vault_aws_auth_backend_client" "vault_aws_client" {
-  backend    = vault_auth_backend.aws.path
   access_key = aws_iam_access_key.vault_access_key.id
   secret_key = aws_iam_access_key.vault_access_key.secret
 }
@@ -73,9 +68,8 @@ resource "time_sleep" "wait_15_seconds" {
 
 // aws authentictaion role in vault used by lambda to authenticate against vault
 resource "vault_aws_auth_backend_role" "lambda_role" {
-  depends_on = [vault_auth_backend.aws, aws_iam_role.iam_for_lambda, vault_aws_auth_backend_client.vault_aws_client, time_sleep.wait_15_seconds]
+  depends_on = [ aws_iam_role.iam_for_lambda, vault_aws_auth_backend_client.vault_aws_client, time_sleep.wait_15_seconds]
 
-  backend                         = vault_auth_backend.aws.path
   role                            = "vault-lambda-role"
   auth_type                       = "iam"
   bound_iam_principal_arns         = [aws_iam_role.iam_for_lambda.arn]
